@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SAFEs Are Not That Safe | SAFE Equity Dilution Calculator</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'vapor': '#BB8CFC',
+            'vapor-dark': '#9b6edc',
+            'cyber': '#C3FE4C',
+            'noir': '#1A1A1A',
+            'offwhite': '#FAF8F8',
+          },
+          fontFamily: {
+            'heading': ['Montserrat', 'Arial', 'sans-serif'],
+            'body': ['Montserrat', 'Georgia', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background: #0f172a; font-family: 'Montserrat', Georgia, sans-serif; }
+    input[type="number"] { -moz-appearance: textfield; }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="min-h-screen text-offwhite">
+
+  <!-- Hero -->
+  <header class="text-center py-8 px-4 border-b border-slate-700/50" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
+    <p class="text-xs tracking-[3px] text-slate-400 uppercase mb-3 font-body">AUB Zein iPark IVP 2026</p>
+    <h1 class="text-3xl md:text-4xl font-bold text-offwhite font-heading mb-2">SAFEs Are Not That Safe</h1>
+    <p class="text-sm text-slate-500 font-body">Interactive Pre-Money SAFE Equity Dilution Calculator</p>
+    <p class="text-xs text-slate-600 mt-2 font-body">Chadi Abi Fadel</p>
+  </header>
+
+  <!-- Preset Bar -->
+  <div id="presetBar" class="flex gap-2 px-4 md:px-8 py-3 bg-slate-800/50 border-b border-slate-700/50 flex-wrap"></div>
+
+  <!-- Main Layout -->
+  <div class="flex flex-col lg:flex-row min-h-[calc(100vh-200px)]">
+
+    <!-- Left Panel: Inputs -->
+    <div class="w-full lg:w-[380px] xl:w-[420px] p-5 border-r border-slate-700/50 bg-slate-800/30 shrink-0">
+      <h2 class="text-sm font-bold text-offwhite mb-5 font-heading tracking-wide">Parameters</h2>
+
+      <div class="mb-4">
+        <label class="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">Founder Shares Outstanding</label>
+        <input id="founderShares" type="number" value="10000000"
+          class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-offwhite focus:border-vapor focus:outline-none transition-colors"
+          oninput="app.onParamChange()">
+      </div>
+
+      <div class="mb-4">
+        <label class="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">Valuation Cap (SAFE Investors)</label>
+        <div class="relative">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">$</span>
+          <input id="valuationCap" type="number" value="2000000"
+            class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-7 pr-3 py-2 text-sm text-offwhite focus:border-vapor focus:outline-none transition-colors"
+            oninput="app.onParamChange()">
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <label class="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">Pre-Money Valuation (Series A)</label>
+        <div class="relative">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">$</span>
+          <input id="premoneyValuation" type="number" value="18000000"
+            class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-7 pr-3 py-2 text-sm text-offwhite focus:border-vapor focus:outline-none transition-colors"
+            oninput="app.onParamChange()">
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-sm font-bold text-offwhite font-heading tracking-wide">Investors</h2>
+      </div>
+
+      <div id="investorList" class="space-y-2 mb-3"></div>
+
+      <button onclick="app.addInvestor()"
+        class="w-full py-2 border border-dashed border-slate-600 rounded-lg text-slate-500 text-xs hover:border-vapor hover:text-vapor transition-colors"
+      >+ Add Investor</button>
+
+      <!-- Price Calculations -->
+      <div class="mt-6 p-3 bg-slate-900/50 rounded-lg border border-slate-700/50">
+        <h3 class="text-[10px] text-slate-500 uppercase tracking-wider mb-2">Price Per Share</h3>
+        <div class="flex justify-between text-xs mb-1">
+          <span class="text-slate-400">SAFE Price</span>
+          <span id="safePriceDisplay" class="text-vapor font-mono">$0.20</span>
+        </div>
+        <div class="flex justify-between text-xs">
+          <span class="text-slate-400">VC Price</span>
+          <span id="vcPriceDisplay" class="text-cyber font-mono">$1.80</span>
+        </div>
+        <div class="flex justify-between text-xs mt-2 pt-2 border-t border-slate-700/50">
+          <span class="text-slate-400">VC pays</span>
+          <span id="vcMultipleDisplay" class="text-offwhite font-mono font-semibold">9.0x more</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Panel: Results -->
+    <div class="flex-1 p-5 overflow-y-auto">
+
+      <!-- Charts Row -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+        <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
+          <h3 class="text-xs text-slate-400 mb-3 text-center">Before New Investor</h3>
+          <div class="flex justify-center" style="max-height:250px;">
+            <canvas id="pieBeforeChart"></canvas>
+          </div>
+        </div>
+        <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
+          <h3 class="text-xs text-slate-400 mb-3 text-center">After New Investor</h3>
+          <div class="flex justify-center" style="max-height:250px;">
+            <canvas id="pieAfterChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dilution Bar Chart -->
+      <div class="bg-slate-800/50 rounded-xl p-4 mb-5 border border-slate-700/50">
+        <h3 class="text-xs text-slate-400 mb-3">Dilution Impact (%)</h3>
+        <div style="height: 220px;">
+          <canvas id="barChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Results Table -->
+      <div class="bg-slate-800/50 rounded-xl p-4 mb-5 border border-slate-700/50 overflow-x-auto">
+        <h3 class="text-xs text-slate-400 mb-3">Detailed Results</h3>
+        <table class="w-full text-xs">
+          <thead>
+            <tr class="text-slate-500 uppercase tracking-wider text-[10px]">
+              <th class="text-left py-2 px-3 border-b border-slate-700">Party</th>
+              <th class="text-right py-2 px-3 border-b border-slate-700">Shares</th>
+              <th class="text-right py-2 px-3 border-b border-slate-700">Before</th>
+              <th class="text-right py-2 px-3 border-b border-slate-700">After</th>
+              <th class="text-right py-2 px-3 border-b border-slate-700">Change</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Key Insight -->
+      <div class="rounded-xl p-4 mb-5 border border-vapor/30" style="background: linear-gradient(135deg, #1e293b, #1a1528);">
+        <h3 class="text-[10px] font-bold text-vapor uppercase tracking-wider mb-2">Key Insight</h3>
+        <p id="insightText" class="text-sm text-slate-300 leading-relaxed"></p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PLAI-Branded Footer -->
+  <footer class="bg-noir border-t-2 border-vapor py-7 px-6 text-center">
+    <p class="text-sm font-medium text-offwhite tracking-wide font-body">Chadi Abi Fadel</p>
+    <p class="text-[11px] text-slate-500 mt-1 tracking-wide font-body">AUB Zein iPark &nbsp;|&nbsp; IVP 2026</p>
+    <div class="w-16 h-px mx-auto my-4" style="background: linear-gradient(90deg, transparent, #BB8CFC, transparent);"></div>
+    <div class="inline-flex items-center gap-3 px-6 py-3 rounded-xl border border-vapor/30" style="background: linear-gradient(135deg, rgba(187,140,252,0.1), rgba(195,254,76,0.05));">
+      <img src="plai-logo.png" alt="PLAI" class="h-10 w-10 object-contain">
+      <div class="text-left">
+        <div class="text-xl font-extralight text-vapor tracking-[4px] leading-none font-heading">PLAI</div>
+        <div class="text-[9px] text-cyber uppercase tracking-[2px] mt-0.5 font-body">Your AI Supercharger</div>
+      </div>
+    </div>
+    <p class="text-[10px] text-slate-600 mt-3 tracking-wider font-body">peaklight.ai</p>
+  </footer>
+
+  <script>
+    const COLORS = [
+      '#BB8CFC', '#9b6edc', '#C3FE4C', '#a8e64c',
+      '#e8c4fc', '#7c5cbf', '#8fd43c', '#d4a8fc',
+    ];
+
+    const PRESETS = [
+      {
+        name: 'Sprint 4b Assignment',
+        founderShares: 10000000,
+        valuationCap: 2000000,
+        premoneyValuation: 18000000,
+        investors: [
+          { name: 'Investor A', type: 'safe', amount: 1000000, isNew: false },
+          { name: 'Investor B', type: 'safe', amount: 500000, isNew: false },
+          { name: 'Investor C', type: 'vc', amount: 2000000, isNew: false },
+          { name: 'Investor D', type: 'safe', amount: 1000000, isNew: true },
+        ]
+      },
+      {
+        name: 'Blank Scenario',
+        founderShares: 10000000,
+        valuationCap: 5000000,
+        premoneyValuation: 20000000,
+        investors: []
+      }
+    ];
+
+    const app = {
+      investors: [],
+      activePreset: 0,
+      pieBeforeChart: null,
+      pieAfterChart: null,
+      barChart: null,
+
+      init() {
+        this.renderPresets();
+        this.createCharts();
+        this.loadPreset(0);
+      },
+
+      // --- Getters ---
+      get founderShares() { return Number(document.getElementById('founderShares').value) || 0; },
+      get valuationCap() { return Number(document.getElementById('valuationCap').value) || 0; },
+      get premoneyValuation() { return Number(document.getElementById('premoneyValuation').value) || 0; },
+      get safePrice() { return this.founderShares ? this.valuationCap / this.founderShares : 0; },
+      get vcPrice() { return this.founderShares ? this.premoneyValuation / this.founderShares : 0; },
+
+      getShares(inv) {
+        const price = inv.type === 'safe' ? this.safePrice : this.vcPrice;
+        return price ? Math.round(inv.amount / price) : 0;
+      },
+
+      get existingInvestors() { return this.investors.filter(i => !i.isNew); },
+      get newInvestors() { return this.investors.filter(i => i.isNew); },
+
+      get totalSharesBefore() {
+        let t = this.founderShares;
+        for (const inv of this.existingInvestors) t += this.getShares(inv);
+        return t;
+      },
+
+      get totalSharesAfter() {
+        let t = this.founderShares;
+        for (const inv of this.investors) t += this.getShares(inv);
+        return t;
+      },
+
+      getResults() {
+        const rows = [];
+        const tBefore = this.totalSharesBefore;
+        const tAfter = this.totalSharesAfter;
+
+        const fb = tBefore ? (this.founderShares / tBefore) * 100 : 0;
+        const fa = tAfter ? (this.founderShares / tAfter) * 100 : 0;
+        rows.push({ name: 'Founder', shares: this.founderShares, beforePct: fb, afterPct: fa, change: fa - fb, color: COLORS[0], isNew: false });
+
+        this.investors.forEach((inv, idx) => {
+          const shares = this.getShares(inv);
+          const bp = (!inv.isNew && tBefore) ? (shares / tBefore) * 100 : 0;
+          const ap = tAfter ? (shares / tAfter) * 100 : 0;
+          rows.push({ name: inv.name, shares, beforePct: bp, afterPct: ap, change: ap - bp, color: COLORS[(idx + 1) % COLORS.length], isNew: inv.isNew });
+        });
+
+        return rows;
+      },
+
+      // --- Rendering ---
+      renderPresets() {
+        const bar = document.getElementById('presetBar');
+        bar.innerHTML = PRESETS.map((p, i) =>
+          `<button onclick="app.loadPreset(${i})" class="px-4 py-1.5 rounded-md text-xs transition-all duration-200 ${this.activePreset === i ? 'bg-vapor text-noir font-semibold' : 'bg-slate-700/60 text-slate-400 hover:bg-slate-600/60'}">${p.name}</button>`
+        ).join('');
+      },
+
+      toggleNew(idx) {
+        this.investors[idx].isNew = !this.investors[idx].isNew;
+        this.update();
+      },
+
+      renderInvestors() {
+        const list = document.getElementById('investorList');
+        list.innerHTML = this.investors.map((inv, idx) => {
+          const borderClass = inv.isNew ? 'border-cyber/60 border-dashed border-2' : 'border border-slate-700';
+          const badgeClass = inv.type === 'safe' ? 'bg-vapor/20 text-vapor' : 'bg-cyber/20 text-cyber';
+          const badgeText = inv.type === 'safe' ? 'SAFE' : 'VC';
+          const newBadgeClass = inv.isNew
+            ? 'bg-cyber/20 text-cyber border-cyber/40'
+            : 'bg-slate-700/40 text-slate-500 border-slate-600/40';
+          const newBadgeText = inv.isNew ? 'NEW' : 'EXISTING';
+          return `
+            <div class="bg-slate-900 rounded-lg p-3 fade-in ${borderClass}">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded uppercase ${badgeClass}">${badgeText}</span>
+                <button onclick="app.toggleNew(${idx})" title="Click to toggle new/existing"
+                  class="text-[10px] font-bold px-2 py-0.5 rounded uppercase border cursor-pointer hover:opacity-80 transition-opacity ${newBadgeClass}">${newBadgeText}</button>
+                <input type="text" value="${inv.name}" onchange="app.investors[${idx}].name=this.value; app.update()"
+                  class="flex-1 bg-transparent text-sm text-offwhite focus:outline-none font-medium" placeholder="Investor name">
+                <button onclick="app.removeInvestor(${idx})" class="text-slate-600 hover:text-red-400 transition-colors" title="Remove">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="relative flex-1">
+                  <span class="absolute left-2 top-1/2 -translate-y-1/2 text-slate-500 text-xs">$</span>
+                  <input type="number" value="${inv.amount}" oninput="app.investors[${idx}].amount=Number(this.value)||0; app.update()"
+                    class="w-full bg-slate-800 border border-slate-700/50 rounded px-2 pl-5 py-1.5 text-xs text-offwhite focus:border-vapor focus:outline-none transition-colors">
+                </div>
+                <select onchange="app.investors[${idx}].type=this.value; app.update()"
+                  class="bg-slate-800 border border-slate-700/50 rounded px-2 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-vapor">
+                  <option value="safe" ${inv.type === 'safe' ? 'selected' : ''}>SAFE</option>
+                  <option value="vc" ${inv.type === 'vc' ? 'selected' : ''}>VC</option>
+                </select>
+              </div>
+            </div>`;
+        }).join('');
+      },
+
+      renderTable() {
+        const rows = this.getResults();
+        const body = document.getElementById('resultsBody');
+        let html = rows.map(r => {
+          const changeClass = r.change > 0 ? 'text-cyber' : r.change < 0 ? 'text-red-400' : 'text-slate-500';
+          const changeText = r.isNew && r.beforePct === 0 ? 'New' : (r.change > 0 ? '+' : '') + r.change.toFixed(2) + '%';
+          const rowClass = r.isNew ? 'bg-cyber/5' : '';
+          const newBadge = r.isNew ? '<span class="ml-1 text-[9px] text-cyber font-bold">(NEW)</span>' : '';
+          return `
+            <tr class="text-offwhite hover:bg-slate-700/20 transition-colors ${rowClass}">
+              <td class="py-2 px-3 border-b border-slate-800">
+                <span class="inline-block w-2 h-2 rounded-full mr-2" style="background:${r.color}"></span>
+                ${r.name}${newBadge}
+              </td>
+              <td class="text-right py-2 px-3 border-b border-slate-800 font-mono">${fmt(r.shares)}</td>
+              <td class="text-right py-2 px-3 border-b border-slate-800 font-mono">${r.beforePct.toFixed(2)}%</td>
+              <td class="text-right py-2 px-3 border-b border-slate-800 font-mono">${r.afterPct.toFixed(2)}%</td>
+              <td class="text-right py-2 px-3 border-b border-slate-800 font-mono font-semibold ${changeClass}">${changeText}</td>
+            </tr>`;
+        }).join('');
+
+        html += `
+          <tr class="text-offwhite font-bold border-t-2 border-slate-600">
+            <td class="py-2 px-3">Total</td>
+            <td class="text-right py-2 px-3 font-mono">${fmt(this.totalSharesAfter)}</td>
+            <td class="text-right py-2 px-3 font-mono">100.00%</td>
+            <td class="text-right py-2 px-3 font-mono">100.00%</td>
+            <td class="text-right py-2 px-3 font-mono text-slate-500">--</td>
+          </tr>`;
+
+        body.innerHTML = html;
+      },
+
+      renderInsight() {
+        const el = document.getElementById('insightText');
+        const newInvs = this.newInvestors;
+        const rows = this.getResults();
+        const founderRow = rows.find(r => r.name === 'Founder');
+
+        if (!newInvs.length || newInvs.every(i => !i.amount)) {
+          el.textContent = 'Mark an investor as NEW or add a new investor to see the dilution impact on every existing party.';
+          return;
+        }
+
+        // Sum new investor shares and amounts
+        let totalNewShares = 0, totalNewAmount = 0;
+        const newNames = [];
+        newInvs.forEach(ni => {
+          totalNewShares += this.getShares(ni);
+          totalNewAmount += ni.amount;
+          newNames.push(ni.name);
+        });
+
+        const fd = founderRow ? Math.abs(founderRow.change).toFixed(2) : '0';
+        const nameStr = newNames.length === 1 ? newNames[0] : newNames.slice(0, -1).join(', ') + ' and ' + newNames[newNames.length - 1];
+        const verbStr = newNames.length === 1 ? 'creates' : 'create';
+        const typeStr = newNames.length === 1 ? 'a Pre-Money SAFE' : 'Pre-Money SAFEs';
+
+        // Find most diluted existing party
+        const existingRows = rows.filter(r => !r.isNew);
+        const mostDiluted = existingRows.reduce((a, b) => a.change < b.change ? a : b, existingRows[0]);
+
+        el.textContent = `Adding ${nameStr} ($${fmt(totalNewAmount)}) as ${typeStr} ${verbStr} ${fmt(totalNewShares)} new shares, expanding the total pool from ${fmt(this.totalSharesBefore)} to ${fmt(this.totalSharesAfter)}. ${mostDiluted.name} takes the biggest hit (-${Math.abs(mostDiluted.change).toFixed(2)}%) because they hold the largest stake. No one's actual share count changes -- only the denominator grows, shrinking every existing fraction.`;
+      },
+
+      renderPrices() {
+        document.getElementById('safePriceDisplay').textContent = '$' + this.safePrice.toFixed(4);
+        document.getElementById('vcPriceDisplay').textContent = '$' + this.vcPrice.toFixed(4);
+        const mult = this.safePrice ? (this.vcPrice / this.safePrice).toFixed(1) : '0';
+        document.getElementById('vcMultipleDisplay').textContent = mult + 'x more';
+      },
+
+      // --- Charts ---
+      createCharts() {
+        const legendOpts = {
+          position: 'bottom',
+          labels: { color: '#94a3b8', font: { size: 10, family: 'Montserrat' }, padding: 12, usePointStyle: true, pointStyle: 'circle' }
+        };
+
+        this.pieBeforeChart = new Chart(document.getElementById('pieBeforeChart'), {
+          type: 'doughnut',
+          data: { labels: [], datasets: [{ data: [], backgroundColor: [], borderWidth: 0 }] },
+          options: { responsive: true, maintainAspectRatio: true, cutout: '55%', plugins: { legend: legendOpts } }
+        });
+
+        this.pieAfterChart = new Chart(document.getElementById('pieAfterChart'), {
+          type: 'doughnut',
+          data: { labels: [], datasets: [{ data: [], backgroundColor: [], borderWidth: 0 }] },
+          options: { responsive: true, maintainAspectRatio: true, cutout: '55%', plugins: { legend: legendOpts } }
+        });
+
+        this.barChart = new Chart(document.getElementById('barChart'), {
+          type: 'bar',
+          data: { labels: [], datasets: [{ data: [], backgroundColor: [], borderRadius: 4, borderSkipped: false }] },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: { callbacks: { label: (ctx) => (ctx.raw > 0 ? '+' : '') + ctx.raw.toFixed(2) + '%' } }
+            },
+            scales: {
+              x: { ticks: { color: '#94a3b8', font: { size: 10, family: 'Montserrat' } }, grid: { display: false } },
+              y: { ticks: { color: '#64748b', font: { size: 10, family: 'Montserrat' }, callback: v => (v > 0 ? '+' : '') + v + '%' }, grid: { color: 'rgba(51,65,85,0.3)' } }
+            }
+          }
+        });
+      },
+
+      updateCharts() {
+        const rows = this.getResults();
+
+        // Before pie
+        const bLabels = [], bData = [], bColors = [];
+        rows.forEach(r => { if (!r.isNew) { bLabels.push(r.name); bData.push(r.beforePct); bColors.push(r.color); } });
+        this.pieBeforeChart.data.labels = bLabels;
+        this.pieBeforeChart.data.datasets[0].data = bData;
+        this.pieBeforeChart.data.datasets[0].backgroundColor = bColors;
+        this.pieBeforeChart.update();
+
+        // After pie
+        this.pieAfterChart.data.labels = rows.map(r => r.name);
+        this.pieAfterChart.data.datasets[0].data = rows.map(r => r.afterPct);
+        this.pieAfterChart.data.datasets[0].backgroundColor = rows.map(r => r.color);
+        this.pieAfterChart.update();
+
+        // Bar chart
+        const barData = rows.map(r => r.isNew && r.beforePct === 0 ? r.afterPct : r.change);
+        this.barChart.data.labels = rows.map(r => r.name);
+        this.barChart.data.datasets[0].data = barData;
+        this.barChart.data.datasets[0].backgroundColor = barData.map(v => v >= 0 ? '#C3FE4C' : '#ef4444');
+        this.barChart.update();
+      },
+
+      // --- Actions ---
+      loadPreset(idx) {
+        const p = PRESETS[idx];
+        this.activePreset = idx;
+        document.getElementById('founderShares').value = p.founderShares;
+        document.getElementById('valuationCap').value = p.valuationCap;
+        document.getElementById('premoneyValuation').value = p.premoneyValuation;
+        this.investors = JSON.parse(JSON.stringify(p.investors));
+        this.renderPresets();
+        this.update();
+      },
+
+      addInvestor() {
+        this.activePreset = -1;
+        const letter = String.fromCharCode(65 + this.investors.length);
+        this.investors.push({ name: 'Investor ' + letter, type: 'safe', amount: 500000, isNew: true });
+        this.renderPresets();
+        this.update();
+      },
+
+      removeInvestor(idx) {
+        this.activePreset = -1;
+        this.investors.splice(idx, 1);
+        this.renderPresets();
+        this.update();
+      },
+
+      onParamChange() {
+        this.activePreset = -1;
+        this.renderPresets();
+        this.update();
+      },
+
+      update() {
+        this.renderInvestors();
+        this.renderTable();
+        this.renderInsight();
+        this.renderPrices();
+        this.updateCharts();
+      }
+    };
+
+    function fmt(n) {
+      return n == null ? '0' : Number(n).toLocaleString('en-US');
+    }
+
+    // Boot
+    document.addEventListener('DOMContentLoaded', () => app.init());
+  </script>
+</body>
+</html>
